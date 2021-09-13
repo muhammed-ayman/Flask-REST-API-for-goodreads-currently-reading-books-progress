@@ -13,9 +13,9 @@ class GoodReadsProgressScraper:
     def check_id_validity(self, res):
         if "Oops - we couldn't find that user." in res:
             self.books_progress_percentages['Error Message'] = "User id isn't valid"
-            return False
-        return True
-
+            self.status = False
+        else:
+            self.status = True
 
     def scrape(self):
         self.get_books_ids()
@@ -31,8 +31,8 @@ class GoodReadsProgressScraper:
         url = f'https://www.goodreads.com/review/list/{self.user_id}?shelf=currently-reading'
         req = requests.get(url)
         res = req.content.decode('utf-8')
-        if not self.check_id_validity(res):
-            self.status = False
+        self.check_id_validity(res)
+        if self.status == False:
             return
         reviews = re.findall("cover_review_[0-9]*", res)
         books_ids = [reviews[i].split('_')[-1] for i in range(len(reviews))]
@@ -40,7 +40,7 @@ class GoodReadsProgressScraper:
 
 
     def get_progress_percentages(self):
-        if not self.books_review_ids:
+        if len(self.books_review_ids) == 0:
             return
 
         for book_id in self.books_review_ids:
